@@ -10,55 +10,51 @@ import {
   SafeAreaView,
 } from "react-native";
 import { getFirestore, collection, getDocs, addDoc } from "firebase/firestore";
-import appFirebase from "./credentials"; 
-
+import appFirebase from "./credentials";
 
 const db = getFirestore(appFirebase);
 
 export default function App() {
   const [listaUsuarios, setListaUsuarios] = useState([]);
-
-  const [nuevoNombre, setNuevoNombre] = useState("");
-  const [nuevoHobby, setNuevoHobby] = useState("");
+  const [nombre, setNombre] = useState("");
+  const [pasatiempo, setPasatiempo] = useState("");
 
   const cargarUsuarios = async () => {
     try {
-      const snapshot = await getDocs(collection(db, "Usuarios")); 
-      const datos = snapshot.docs.map((documento) => ({
-        id: documento.id,
-        nombre: documento.data().nombre,
-        pasatiempo: documento.data().pasatiempo,
+      const snapshot = await getDocs(collection(db, "usuarios"));
+      const datos = snapshot.docs.map((doc) => ({
+        id: doc.id,
+        nombre: doc.data().nombre,
+        pasatiempo: doc.data().pasatiempo,
       }));
       setListaUsuarios(datos);
     } catch (err) {
-      console.error("Error cargando:", err.message);
+      console.error("Error al cargar usuarios:", err.message);
     }
   };
 
   useEffect(() => {
-    cargarUsuarios(); 
+    cargarUsuarios();
   }, []);
 
-  const guardarNuevoUsuario = async () => {
-    if (!nuevoNombre.trim() || !nuevoHobby.trim()) {
-      Alert.alert("Atención", "Debes llenar todos los campos");
+  const agregarUsuario = async () => {
+    if (!nombre.trim() || !pasatiempo.trim()) {
+      Alert.alert("Error", "Debes completar todos los campos");
       return;
     }
 
     try {
-      await addDoc(collection(db, "Usuarios"), {
-        nombre: nuevoNombre.trim(),
-        pasatiempo: nuevoHobby.trim(),
+      await addDoc(collection(db, "usuarios"), {
+        nombre: nombre,
+        pasatiempo: pasatiempo,
       });
-
-      Alert.alert("Listo", "Se guardó el usuario");
-
-      setNuevoNombre("");
-      setNuevoHobby("");
-
+      
+      setNombre("");
+      setPasatiempo("");
+      Alert.alert("Éxito", "Usuario agregado correctamente");
       cargarUsuarios();
-    } catch (err) {
-      Alert.alert("Error", "No se guardó: " + err.message);
+    } catch (error) {
+      Alert.alert("Error", "No se pudo agregar el usuario: " + error.message);
     }
   };
 
@@ -78,25 +74,22 @@ export default function App() {
       <View style={estilos.formulario}>
         <TextInput
           style={estilos.campo}
-          placeholder="Tu nombre..."
+          placeholder="Nombre"
           placeholderTextColor="#999"
-          value={nuevoNombre}
-          onChangeText={setNuevoNombre}
+          value={nombre}
+          onChangeText={setNombre}
         />
 
         <TextInput
           style={estilos.campo}
-          placeholder="Tu pasatiempo..."
+          placeholder="Pasatiempo"
           placeholderTextColor="#999"
-          value={nuevoHobby}
-          onChangeText={setNuevoHobby}
+          value={pasatiempo}
+          onChangeText={setPasatiempo}
         />
 
-        <TouchableOpacity
-          style={estilos.boton}
-          onPress={guardarNuevoUsuario}
-        >
-          <Text style={estilos.botonTexto}>+ Agregar</Text>
+        <TouchableOpacity style={estilos.boton} onPress={agregarUsuario}>
+          <Text style={estilos.botonTexto}>Agregar Usuario</Text>
         </TouchableOpacity>
       </View>
 
@@ -108,13 +101,12 @@ export default function App() {
         keyExtractor={(item) => item.id}
         contentContainerStyle={estilos.lista}
         ListEmptyComponent={
-          <Text style={estilos.vacio}>No hay usuarios aún</Text>
+          <Text style={estilos.vacio}>No hay usuarios registrados</Text>
         }
       />
     </SafeAreaView>
   );
 }
-
 
 const estilos = StyleSheet.create({
   pantalla: {
